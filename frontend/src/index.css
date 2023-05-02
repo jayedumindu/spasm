@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base{
+    .nav-link {
+        @apply mr-5 text-2xl p-3 !important
+    }
+    .nav-link-visited {
+        @apply font-bold text-5xl mr-5 p-3 !important
+    }
+    .breaker {
+        @apply h-0 basis-full
+    }
+}
