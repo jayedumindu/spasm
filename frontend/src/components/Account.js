@@ -12,13 +12,14 @@ function Account() {
       host: "spasm-peer-server.onrender.com",
       path: "/connect",
       port: "443",
-      secure: true
+      secure: true,
     })
   );
 
   const hostId = useRef(null);
   const message = useRef(null);
   const connection = useRef(null);
+  const call = useRef(null);
 
   const sendMessage = () => {
     // console.log(hostId.current)
@@ -31,35 +32,52 @@ function Account() {
     connection.current = myPeer.current.connect(hostId.current);
   };
 
+  // const sendVideoStream = () => {};
+
   // const socket = useRef(io("http://localhost:3080"));
 
   useEffect(() => {
     // when cmoponent mounts
   }, []);
 
-  // const connectWithHost = () => {
-  //   var getUserMedia =
-  //     navigator.getUserMedia ||
-  //     navigator.webkitGetUserMedia ||
-  //     navigator.mozGetUserMedia;
-  //   getUserMedia(
-  //     { video: true, audio: true },
-  //     (stream) => {
-  //       // myVideo.srcObject = stream;
-  //       // myVideo.muted = true;
-  //       // myVideo.play();
-  //       const call = myPeer.current.call(hostId, stream);
-  //       call.on("stream", (remoteStream) => {
-  //         myVideo.srcObject.srcObject = remoteStream;
-  //         myVideo.muted = true;
-  //         this.friendVideo.play();
-  //       });
-  //     },
-  //     (err) => {
-  //       console.log("Error!");
-  //     }
-  //   );
-  // };
+  const sendVideoStream = () => {
+    var getUserMedia =
+      navigator.getUserMedia ||
+      navigator.webkitGetUserMedia ||
+      navigator.mozGetUserMedia;
+    getUserMedia(
+      { video: true, audio: true },
+      (stream) => {
+        // myVideo.srcObject = stream;
+        // myVideo.muted = true;
+        // myVideo.play();
+        console.log("call ekak dunna");
+        call.current = myPeer.current.call(hostId.current, stream);
+        call.current.on("stream", (remoteStream) => {
+          console.log("menna hambenwa badu");
+          myVideo.srcObject = remoteStream;
+          myVideo.muted = true;
+          myVideo.addEventListener("loadedmetadata", () => {
+            myVideo.play();
+          });
+          document.body.append(myVideo);
+        });
+        setCallEvents()
+      },
+      (err) => {
+        console.log("Error!");
+      }
+    );
+  };
+
+  const setCallEvents = () => {
+    // call.current.on("stream", (remoteStream) => {
+    //   console.log("menna hambenwa badu")
+    //   myVideo.srcObject.srcObject = remoteStream;
+    //   myVideo.muted = true;
+    //   this.friendVideo.play();
+    // });
+  };
 
   // const connectToHost = (stream) => {
   //   const connection = myPeer.current.call(hostId.current,stream);
@@ -106,7 +124,7 @@ function Account() {
   return (
     <>
       <h1>User Account</h1>
-      <button>listen to the stream</button>
+      <button onClick={sendVideoStream}>listen to the stream</button>
       <TextField onChange={(event) => (hostId.current = event.target.value)} />
       <button onClick={connectWithHost}>Connect to this ID</button>
       <hr />

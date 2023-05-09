@@ -19,7 +19,7 @@ function Dashboard() {
       host: "spasm-peer-server.onrender.com",
       path: "/connect",
       port: "443",
-      secure: true
+      secure: true,
     })
   );
 
