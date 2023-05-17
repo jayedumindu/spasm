@@ -13,7 +13,7 @@
     .breaker {
         @apply h-0 basis-full
     }
-    video {
+    /* video {
         @apply h-48 w-48
-    }
+    } */
 }

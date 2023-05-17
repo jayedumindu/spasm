@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@api.video/browser-to-rtmp-client": "^0.2.4",
+    "@auth0/auth0-react": "^2.1.0",
     "@emotion/react": "^11.10.8",
     "@emotion/styled": "^11.10.8",
     "@mui/icons-material": "^5.11.16",

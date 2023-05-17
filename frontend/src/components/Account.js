@@ -2,9 +2,12 @@ import { Button } from "@mui/base";
 import React, { useEffect, useRef, useState } from "react";
 import { Peer } from "peerjs";
 import { TextField } from "@mui/material";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useNavigate } from "react-router-dom";
 const { io } = require("socket.io-client");
 
 function Account() {
+  const navigate = useNavigate();
   const myVideo = document.createElement("video");
 
   const myPeer = useRef(
@@ -22,9 +25,6 @@ function Account() {
   const call = useRef(null);
 
   const sendMessage = () => {
-    // console.log(hostId.current)
-    // const connection = myPeer.current.connect(hostId.current)
-    // console.log(message.current)
     connection.current.send(message.current);
   };
 
@@ -32,9 +32,7 @@ function Account() {
     connection.current = myPeer.current.connect(hostId.current);
   };
 
-  // const sendVideoStream = () => {};
-
-  // const socket = useRef(io("http://localhost:3080"));
+  const { isAuthenticated } = useAuth0();
 
   useEffect(() => {
     // when cmoponent mounts
@@ -62,7 +60,7 @@ function Account() {
           });
           document.body.append(myVideo);
         });
-        setCallEvents()
+        setCallEvents();
       },
       (err) => {
         console.log("Error!");
@@ -121,20 +119,30 @@ function Account() {
   //   console.log(socket.id); // x8WIv7-mJelg7on_ALbx
   // });
 
+  // if (!isAuthenticated) {
+  //   navigate("/home");
+  //   console.log("user not authenticated!!")
+  //   return
+  // }
+  console.log(isAuthenticated)
   return (
-    <>
-      <h1>User Account</h1>
-      <button onClick={sendVideoStream}>listen to the stream</button>
-      <TextField onChange={(event) => (hostId.current = event.target.value)} />
-      <button onClick={connectWithHost}>Connect to this ID</button>
-      <hr />
-      <TextField
-        onChange={(event) => {
-          message.current = event.target.value;
-        }}
-      />
-      <button onClick={sendMessage}>send</button>
-    </>
+    isAuthenticated && (
+      <>
+        <h1>User Account</h1>
+        <button onClick={sendVideoStream}>listen to the stream</button>
+        <TextField
+          onChange={(event) => (hostId.current = event.target.value)}
+        />
+        <button onClick={connectWithHost}>Connect to this ID</button>
+        <hr />
+        <TextField
+          onChange={(event) => {
+            message.current = event.target.value;
+          }}
+        />
+        <button onClick={sendMessage}>send</button>
+      </>
+    )
   );
 }
 
