@@ -29,8 +29,8 @@ function Stream() {
     });
     const getUserMedia = navigator.mediaDevices.getUserMedia;
     localCamStream = await getUserMedia({
-      video: state.video | true,
-      audio: state.audio | true,
+      video: state?.video | true,
+      audio: state?.audio | true,
     });
     cam.current = attachToDOM("cameraData", localCamStream);
     myPeer.on("open", function (id) {
@@ -185,7 +185,8 @@ function Stream() {
     <div>
       <h1>user peer : {userId}</h1>
 
-      <button onClick={captureScreen}> share my screen</button>
+      <button onClick={captureScreen}> share my screen </button><br />
+      <button onClick={shareWebCam}> video chat </button>
       <div id="mediaWrapper"></div>
     </div>
   );
