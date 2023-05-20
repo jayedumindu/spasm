@@ -2,7 +2,14 @@
 module.exports = {
   content: ["./src/**/*.{js,jsx}"],
   theme: {
-    extend: {},
+    extend: {
+      backgroundImage: {
+        "caro-1": "url('/src/assets/images/home-carousel-1.svg')",
+        "caro-2":
+          "url('https://upload.wikimedia.org/wikipedia/commons/6/68/WebRTC_Logo.svg')",
+        "caro-3": "url('/src/assets/images/home-carousel-2.svg')",
+      },
+    },
   },
   plugins: [],
 };

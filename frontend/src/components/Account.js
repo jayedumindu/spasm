@@ -4,6 +4,7 @@ import { Peer } from "peerjs";
 import { TextField } from "@mui/material";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "./Navbar";
 const { io } = require("socket.io-client");
 
 function Account() {
@@ -128,6 +129,7 @@ function Account() {
   return (
     isAuthenticated && (
       <>
+      <Navbar />
         <h1>User Account</h1>
         <button onClick={sendVideoStream}>listen to the stream</button>
         <TextField

@@ -35,7 +35,7 @@ function Stream() {
     cam.current = attachToDOM("cameraData", localCamStream);
     myPeer.on("open", function (id) {
       console.log("connection opened : " + id);
-      setUserId(id);
+      userId.current = id;
     });
 
     myPeer.on("connection", (con) => {
@@ -43,6 +43,7 @@ function Stream() {
     });
 
     myPeer.on("call", (call) => {
+      console.log("call ekak awa")
       // if both are present
       if (cam.current && screen.current) {
         // let stream = new MediaStream([
@@ -50,8 +51,13 @@ function Stream() {
         // ]);
         // attachToDOM("output", stream);
         // console.log(stream);
+        console.log("methana thamai")
         call.answer(overlay.current.captureStream());
-      } else call.answer(cam.current);
+      } else {
+        console.log("patan gatta");
+        call.answer(cam.current.captureStream());
+        console.log("dunna");
+      }
       myPeer.on("close", (con) => {
         //  close the call
         call.close();
@@ -61,10 +67,10 @@ function Stream() {
 
   // only when mounted
   useEffect(() => {
-    shareWebCam();
+    // shareWebCam();
   }, []);
 
-  const [userId, setUserId] = useState(null);
+  const userId = useRef(null);
 
   const captureScreen = async () => {
     try {
@@ -183,9 +189,10 @@ function Stream() {
 
   return (
     <div>
-      <h1>user peer : {userId}</h1>
+      <h1>user peer : {userId.current}</h1>
 
-      <button onClick={captureScreen}> share my screen </button><br />
+      <button onClick={captureScreen}> share my screen </button>
+      <br />
       <button onClick={shareWebCam}> video chat </button>
       <div id="mediaWrapper"></div>
     </div>
