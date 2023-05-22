@@ -30,7 +30,8 @@ function Homepage() {
         <div className="home-main">
           <div className="home-inner-1">
             <h1 className="font-bold text-5xl basis-full">
-              Premium video meetings for everyone
+              <span className="font-adelia">Premium</span> video meetings <br />
+              for <span className="font-adelia">everyone</span>
             </h1>
             <p>
               Lorem ipsum dolor sit amet consectetur adipisicing elit.
@@ -38,7 +39,12 @@ function Homepage() {
               sed natus mollitia vel exercitationem, fugiat saepe magni
               dignissimos soluta ratione nulla dolor, ipsa quaerat.
             </p>
-            <Button startIcon={<VideoCallIcon />} onClick={() => window.location.pathname = "/stream"}>New Meeting</Button>
+            <Button
+              startIcon={<VideoCallIcon />}
+              onClick={() => (window.location.pathname = "/stream")}
+            >
+              New Meeting
+            </Button>
             <TextField
               label={
                 <>

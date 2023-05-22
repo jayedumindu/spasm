@@ -1,9 +1,35 @@
+import { IconButton } from "@mui/material";
 import Peer from "peerjs";
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
+// buttons
+import VideocamIcon from "@mui/icons-material/Videocam";
+import VideocamOffIcon from "@mui/icons-material/VideocamOff";
+import MicIcon from "@mui/icons-material/Mic";
+import MicOffIcon from "@mui/icons-material/MicOff";
+import ScreenShareIcon from "@mui/icons-material/ScreenShare";
+import StopScreenShareIcon from "@mui/icons-material/StopScreenShare";
+import CallIcon from "@mui/icons-material/Call";
+import CallEndIcon from "@mui/icons-material/CallEnd";
+import AlertDialog from "./AlertDialog";
+import BackDrop from "./BackDrop";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import Chat from "./Chat";
+import { useAuth0 } from "@auth0/auth0-react";
 
 function Stream() {
   const { state } = useLocation();
+  const {user} = useAuth0()
+
+  const [audio, setAudio] = useState(true);
+  const [video, setVideo] = useState(true);
+  const [screenShare, setScreen] = useState(false);
+  const [callOngoing, setCallOngoing] = useState(false);
+  // const [chatEl, setChatEl] = useState(null);
+  const [peer, setPeer] = useState(null);
+  const [isLoading, setLoading] = useState(false);
+
+  const [userId, setUserId] = useState(null);
 
   const canvasElement = document.createElement("canvas");
   const canvasCtx = canvasElement.getContext("2d", {
@@ -20,57 +46,98 @@ function Stream() {
   const cam = useRef(null);
   const overlay = useRef(null);
 
-  const shareWebCam = async () => {
-    const myPeer = new Peer(undefined, {
+  const endCall = () => {
+    peer.disconnect();
+    peer.destroy();
+    handleClickOpen();
+  };
+
+  const [open, setOpen] = useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const startCall = () => {
+    setLoading(true);
+    const peer = new Peer(undefined, {
       host: "spasm-peer-server.onrender.com",
       path: "/connect",
       port: "443",
       secure: true,
     });
-    const getUserMedia = navigator.mediaDevices.getUserMedia;
-    localCamStream = await getUserMedia({
-      video: state?.video | true,
-      audio: state?.audio | true,
-    });
-    cam.current = attachToDOM("cameraData", localCamStream);
-    myPeer.on("open", function (id) {
+    setPeer(peer);
+    peer.on("open", function (id) {
       console.log("connection opened : " + id);
-      userId.current = id;
+      setUserId(id);
+      setCallOngoing(true);
+      // setChatEl();
     });
 
-    myPeer.on("connection", (con) => {
+    peer.on("connection", (con) => {
       con.on("data", (data) => console.log("new message : " + data));
     });
-
-    myPeer.on("call", (call) => {
-      console.log("call ekak awa")
+    peer.on("call", (call) => {
+      console.log("call ekak awa");
       // if both are present
       if (cam.current && screen.current) {
-        // let stream = new MediaStream([
-        //   ...canvasElement.captureStream().getVideoTracks(),
-        // ]);
-        // attachToDOM("output", stream);
-        // console.log(stream);
-        console.log("methana thamai")
+        console.log("methana thamai");
         call.answer(overlay.current.captureStream());
       } else {
         console.log("patan gatta");
         call.answer(cam.current.captureStream());
         console.log("dunna");
       }
-      myPeer.on("close", (con) => {
+      peer.on("close", (con) => {
         //  close the call
         call.close();
+        console.log("peer stopped! /n call stopped");
       });
     });
+    setTimeout(() => setLoading(false), 2000);
+  };
+
+  function attachMediaStream(id, audio, video) {
+    let elem = document.getElementById(id);
+    // let stream = getLocalCamStream();
+    navigator.mediaDevices
+      .getUserMedia({
+        video: video,
+        audio: audio,
+      })
+      .then((stream) => {
+        if (elem) {
+          if (typeof elem.srcObject === "object") {
+            elem.srcObject = new MediaStream(stream.getTracks());
+          } else {
+            elem.src = window.URL.createObjectURL(stream);
+          }
+        } else {
+          throw new Error("Unable to attach media stream");
+        }
+      });
+  }
+
+  const shareWebCam = () => {
+    navigator.mediaDevices
+      .getUserMedia({
+        video: video,
+        audio: audio,
+      })
+      .then((stream) => {
+        cam.current = attachToDOM("cameraData", stream);
+      });
   };
 
   // only when mounted
   useEffect(() => {
-    // shareWebCam();
+    // retreiving the element
+    shareWebCam();
   }, []);
-
-  const userId = useRef(null);
 
   const captureScreen = async () => {
     try {
@@ -104,8 +171,11 @@ function Stream() {
     videoElem.autoplay = true;
     videoElem.muted = true;
     videoElem.setAttribute("playsinline", true);
+    const parent = document.body.querySelector(".video-mask");
     videoElem.srcObject = new MediaStream(stream.getTracks());
-    document.body.append(videoElem);
+    parent.append(videoElem);
+    // let mediaStream = document.querySelector("video").srcObject;
+    // stream.getVideoTracks().forEach((track) => track.play());
     return videoElem;
   }
 
@@ -187,14 +257,152 @@ function Stream() {
     }
   }
 
-  return (
-    <div>
-      <h1>user peer : {userId.current}</h1>
+  const audioToggle = () => {
+    if (!audio) {
+      attachMediaStream("cameraData", !audio, video);
+    } else {
+      // stop audio sharing
+      let mediaStream = document.getElementById("cameraData").srcObject;
+      mediaStream.getAudioTracks().forEach((track) => track.stop());
+    }
+    setAudio(!audio);
+  };
 
-      <button onClick={captureScreen}> share my screen </button>
-      <br />
-      <button onClick={shareWebCam}> video chat </button>
-      <div id="mediaWrapper"></div>
+  const videoToggle = () => {
+    if (!video) {
+      attachMediaStream("cameraData", audio, !video);
+    } else {
+      // stop video sharing
+      let mediaStream = document.getElementById("cameraData").srcObject;
+      mediaStream.getVideoTracks().forEach((track) => track.stop());
+    }
+    setVideo(!video);
+  };
+  const screenToggle = () => {
+    setScreen(!screenShare);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(userId);
+  };
+
+  // messages
+  const [messages, setMessages] = useState([
+    {
+      text: "user2 has joined the conversation",
+      timestamp: 1578366389250,
+      type: "notification",
+    },
+    {
+      author: {
+        username: "user1",
+        id: 1,
+        avatarUrl: "https://image.flaticon.com/icons/svg/2446/2446032.svg",
+      },
+      text: "Hi",
+      type: "text",
+      timestamp: 1578366393250,
+    },
+    {
+      author: { username: "user2", id: 2, avatarUrl: null },
+      text: "Show two buttons",
+      type: "text",
+      timestamp: 1578366425250,
+      buttons: [
+        {
+          type: "URL",
+          title: "Yahoo",
+          payload: "http://www.yahoo.com",
+        },
+        {
+          type: "URL",
+          title: "Example",
+          payload: "http://www.example.com",
+        },
+      ],
+    },
+    {
+      author: {
+        username: "user1",
+        id: 1,
+        avatarUrl: "https://image.flaticon.com/icons/svg/2446/2446032.svg",
+      },
+      text: "What's up?",
+      type: "text",
+      timestamp: 1578366425250,
+      hasError: true,
+    },
+  ]);
+
+  const handleOnSendMessage = (message) => {
+    console.log(message)
+    setMessages(
+      messages.concat({
+        author: {
+          username: user?.name,
+          id: 1,
+          avatarUrl: user?.picture
+        },
+        text: message,
+        timestamp: +new Date(),
+        type: "text"
+      })
+    );
+  };
+
+  return (
+    <div className="stream-main">
+      <div className="stream-header">
+        {callOngoing && (
+          <>
+            <h1>{userId}</h1>
+            <IconButton onClick={copyToClipboard} className="copy-btn">
+              <ContentCopyIcon />
+            </IconButton>
+          </>
+        )}
+      </div>
+      <div className="stream-body">
+        <AlertDialog open={open} handleClose={handleClose} />
+        <BackDrop open={isLoading} title={"establishing a connection  "} />
+        <div className="mediaWrapper">
+          <div className="video-mask"></div>
+        </div>
+        {callOngoing && <Chat messages={messages} handleOnSendMessage={handleOnSendMessage} />}
+      </div>
+      <div className="buttonBar">
+        <IconButton onClick={audioToggle} className="stream-btn">
+          {audio && <MicIcon />}
+          {!audio && <MicOffIcon />}
+        </IconButton>
+        <IconButton onClick={videoToggle} className="stream-btn">
+          {video && <VideocamIcon />}
+          {!video && <VideocamOffIcon />}
+        </IconButton>
+        <IconButton onClick={screenToggle} className="stream-btn">
+          {screenShare && <ScreenShareIcon />}
+          {!screenShare && <StopScreenShareIcon />}
+        </IconButton>
+        <IconButton
+          onClick={callOngoing ? endCall : startCall}
+          className={`stream-btn stream-btn-call ${
+            callOngoing ? "stream-btn-call-started" : "stream-btn-call-ended"
+          }`}
+        >
+          {!callOngoing && (
+            <>
+              <p>start</p> &nbsp;
+              <CallIcon />
+            </>
+          )}
+          {callOngoing && (
+            <>
+              <p>end</p> &nbsp;
+              <CallEndIcon />
+            </>
+          )}
+        </IconButton>
+      </div>
     </div>
   );
 }

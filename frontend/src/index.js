@@ -21,3 +21,5 @@ root.render(
     </Auth0ProviderWithNavigation>
   </BrowserRouter>
 );
+
+// "start": "sudo kill -9 $(sudo lsof -t -i:3000) || react-scripts start",

@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 export default function SplashScreen() {
   return (
     <Box className="splash-main">
-      <CircularProgress />
+      <CircularProgress className="splash-main-progress"/>
     </Box>
   );
 }

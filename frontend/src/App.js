@@ -8,6 +8,7 @@ import Account from "./components/Account";
 import Stream from "./components/Stream";
 import Listen from "./components/Listen";
 import RouteGuard from "./components/RouteGuard";
+import SplashScreen from "./components/SplashScreen";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
       <Route path="/stream" element={<RouteGuard component={Stream} />} />
 
       <Route path="/join" element={<RouteGuard component={Listen} />} />
+      {/* <Route path="/splash" element={<SplashScreen/>} /> */}
     </Routes>
   );
 }

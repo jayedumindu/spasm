@@ -14,7 +14,7 @@ import Clock from "./Clock";
 import IconButton from "@mui/material/IconButton";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useAuth0, User } from "@auth0/auth0-react";
-import logo from "../assets/images/spasm-high-resolution-logo-black-on-transparent-background.png";
+import logo from "../assets/images/spasm-website-favicon-color.png";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ClickAwayListener from "@mui/base/ClickAwayListener";
 
@@ -53,8 +53,8 @@ function Navbar() {
             <Box
               component="img"
               sx={{
-                height: "80px",
-                width: "200px",
+                height: "70px",
+                width: "80px",
                 marginTop: "10px",
                 maxHeight: { xs: 233, md: 167 },
                 maxWidth: { xs: 350, md: 250 },
