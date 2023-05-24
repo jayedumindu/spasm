@@ -1,13 +1,23 @@
 import { useAuth0 } from "@auth0/auth0-react";
-import { AppBar, Button, IconButton, TextField, Toolbar, Typography } from "@mui/material";
-import React, { useEffect } from "react";
+import {
+  AppBar,
+  Button,
+  IconButton,
+  TextField,
+  Toolbar,
+  Typography,
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Slider from "./Slider";
 import VideoCallIcon from "@mui/icons-material/VideoCall";
 import KeyboardIcon from "@mui/icons-material/Keyboard";
+import ConnectWithoutContactIcon from "@mui/icons-material/ConnectWithoutContact";
 
 function Homepage() {
   const { loginWithRedirect, logout } = useAuth0();
+  const [valid, setValid] = useState(false);
+  const [code, setCode] = useState(false);
 
   const login = async () => {
     await loginWithRedirect({
@@ -23,6 +33,17 @@ function Homepage() {
   useEffect(() => {
     console.log("rendered");
   });
+  const pattern =
+    /[a-z|0-9]{8}-[a-z|0-9]{4}-[a-z|0-9]{4}-[a-z|0-9]{4}-[a-z|0-9]{12}/;
+  const validateForRedirect = (event) => {
+    let code = event.target.value;
+    if (pattern.test(code)) {
+      setValid(true);
+      setCode(code);
+    } else {
+      setValid(false);
+    }
+  };
   return (
     <>
       <div className="home">
@@ -46,12 +67,18 @@ function Homepage() {
               New Meeting
             </Button>
             <TextField
+              onChange={validateForRedirect}
               label={
                 <>
                   <KeyboardIcon /> Enter code here
                 </>
               }
             />
+            {valid && (
+              <Button onClick={() => (window.location.pathname = "/join/" + code)}>
+                Join
+              </Button>
+            )}
             <hr />
           </div>
           <div className="home-inner-2">

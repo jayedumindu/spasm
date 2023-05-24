@@ -75,7 +75,7 @@ function Stream() {
       console.log("connection opened : " + id);
       setUserId(id);
       setCallOngoing(true);
-      // setChatEl();
+      setTimeout(() => setLoading(false), 2000);
     });
 
     peer.on("connection", (con) => {
@@ -98,7 +98,6 @@ function Stream() {
         console.log("peer stopped! /n call stopped");
       });
     });
-    setTimeout(() => setLoading(false), 2000);
   };
 
   function attachMediaStream(id, audio, video) {

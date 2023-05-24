@@ -3,143 +3,101 @@ import React, { useEffect, useRef, useState } from "react";
 import { Peer } from "peerjs";
 import { TextField } from "@mui/material";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "./Navbar";
-const { io } = require("socket.io-client");
+
+import { createEmptyAudioTrack, createEmptyVideoTrack } from "../media/stream";
 
 function Account() {
   const navigate = useNavigate();
+  const { code } = useParams();
   const myVideo = document.createElement("video");
 
-  const myPeer = useRef(
-    new Peer(undefined, {
+  const peer = useRef(null);
+
+  const [message, setMessage] = useState(null);
+  const [connection, setConnection] = useState(null);
+  const [call, setCall] = useState(null);
+
+  const sendMessage = () => {
+    connection.send(message);
+  };
+
+  const connectWithHost = () => {
+    peer.current = new Peer(undefined, {
       host: "spasm-peer-server.onrender.com",
       path: "/connect",
       port: "443",
       secure: true,
-    })
-  );
-
-  const hostId = useRef(null);
-  const message = useRef(null);
-  const connection = useRef(null);
-  const call = useRef(null);
-
-  const sendMessage = () => {
-    connection.current.send(message.current);
-  };
-
-  const connectWithHost = () => {
-    connection.current = myPeer.current.connect(hostId.current);
+    });
+    peer.current.on("open", (id) => {
+      console.log("client id" + id);
+      sendVideoStream();
+      addConnection();
+    });
   };
 
   const { isAuthenticated } = useAuth0();
 
   useEffect(() => {
     // when cmoponent mounts
+    connectWithHost();
   }, []);
 
-  const sendVideoStream = () => {
-    var getUserMedia =
-      navigator.getUserMedia ||
-      navigator.webkitGetUserMedia ||
-      navigator.mozGetUserMedia;
-    getUserMedia(
-      { video: true, audio: true },
-      (stream) => {
-        // myVideo.srcObject = stream;
-        // myVideo.muted = true;
-        // myVideo.play();
-        console.log("call ekak dunna");
-        call.current = myPeer.current.call(hostId.current, stream);
-        call.current.on("stream", (remoteStream) => {
-          console.log("menna hambenwa badu");
-          myVideo.srcObject = remoteStream;
-          myVideo.muted = true;
-          myVideo.addEventListener("loadedmetadata", () => {
-            myVideo.play();
-          });
-          document.body.append(myVideo);
-        });
-        setCallEvents();
-      },
-      (err) => {
-        console.log("Error!");
-      }
-    );
-  };
-
-  const setCallEvents = () => {
-    // call.current.on("stream", (remoteStream) => {
-    //   console.log("menna hambenwa badu")
-    //   myVideo.srcObject.srcObject = remoteStream;
-    //   myVideo.muted = true;
-    //   this.friendVideo.play();
-    // });
-  };
-
-  // const connectToHost = (stream) => {
-  //   const connection = myPeer.current.call(hostId.current,stream);
-  //   const video = document.createElement("video");
-  //   video.muted = true;
-  //   // console.log(call)
-  //   connection.on("stream", (userVideoStream) => {
-  //     addVideoStream(video, userVideoStream);
-  //   });
-  //   console.log("connected with host " + hostId.current);
-  // };
-
-  // when a call is received
-
-  // myPeer.current.on("call", (call) => {
-  //   call.answer();
-  //   console.log("answer kara");
-  //   const video = document.createElement("video");
-  //   video.muted = true;
-  //   call.on("stream", (userVideoStream) => {
-  //     addVideoStream(video, userVideoStream);
-  //   });
-  // });
-
-  myPeer.current.on("open", (id) => {
-    console.log("client id" + id);
+  useEffect(() => {
+    console.log("refreshes!");
   });
 
-  const addVideoStream = function addVideoStream(video, stream) {
-    video.srcObject = stream;
-    video.addEventListener("loadedmetadata", () => {
-      video.play();
+  const sendVideoStream = () => {
+    const stream = new MediaStream([
+      createEmptyAudioTrack(),
+      createEmptyVideoTrack({ width: 640, height: 480 }),
+    ]);
+    const call = peer.current.call(code, stream);
+    setCall(call);
+    call.on("stream", (remoteStream) => {
+      console.log("menna hambenwa badu");
+      attachToDOM("localVideo", remoteStream);
     });
-    document.body.appendChild(video);
-    console.log("add unaaaa");
   };
 
-  // managing socket connection
+  const attachToDOM = (id, stream) => {
+    let videoElem = document.createElement("video");
+    videoElem.id = id;
+    videoElem.width = 640;
+    videoElem.height = 360;
+    videoElem.autoplay = true;
+    videoElem.muted = false;
+    videoElem.setAttribute("playsinline", true);
+    const parent = document.body.querySelector(".mask");
+    videoElem.srcObject = stream;
+    parent.append(videoElem);
+  };
 
-  // socket.current.on("connect", () => {
-  //   console.log(socket.id); // x8WIv7-mJelg7on_ALbx
-  // });
+  const addConnection = function () {
+    let conn = peer.current.connect(code);
+    setConnection(conn);
+    conn.on("open", function () {
+      // Receive messages
+      conn.on("data", function (data) {
+        console.log("Received", data);
+      });
+    });
+  };
 
-  // if (!isAuthenticated) {
-  //   navigate("/home");
-  //   console.log("user not authenticated!!")
-  //   return
-  // }
-  console.log(isAuthenticated)
   return (
     isAuthenticated && (
       <>
-      <Navbar />
+        {/* <Navbar /> */}
         <h1>User Account</h1>
-        <button onClick={sendVideoStream}>listen to the stream</button>
-        <TextField
-          onChange={(event) => (hostId.current = event.target.value)}
-        />
-        <button onClick={connectWithHost}>Connect to this ID</button>
+        {/* <button onClick={sendVideoStream}>listen to the stream</button> */}
+
+        {/* <button onClick={connectWithHost}>Connect to this ID</button> */}
+        <div className="mask"></div>
         <hr />
         <TextField
           onChange={(event) => {
-            message.current = event.target.value;
+            setMessage(event.target.value);
           }}
         />
         <button onClick={sendMessage}>send</button>

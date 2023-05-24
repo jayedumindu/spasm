@@ -21,7 +21,7 @@ function App() {
 
       <Route path="/stream" element={<RouteGuard component={Stream} />} />
 
-      <Route path="/join" element={<RouteGuard component={Listen} />} />
+      <Route path="/join/:code" element={<RouteGuard component={Account} />} />
       {/* <Route path="/splash" element={<SplashScreen/>} /> */}
     </Routes>
   );
