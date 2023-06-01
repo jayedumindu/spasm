@@ -13,27 +13,27 @@ function Account() {
   const { code } = useParams();
   const myVideo = document.createElement("video");
 
-  const peer = useRef(null);
+  const [peer, setPeer] = useState(null);
 
   const [message, setMessage] = useState(null);
   const [connection, setConnection] = useState(null);
   const [call, setCall] = useState(null);
+  const [ongoing, setOngoing] = useState(false);
 
   const sendMessage = () => {
     connection.send(message);
   };
 
   const connectWithHost = () => {
-    peer.current = new Peer(undefined, {
+    const peerConnection = new Peer(undefined, {
       host: "spasm-peer-server.onrender.com",
       path: "/connect",
       port: "443",
       secure: true,
     });
-    peer.current.on("open", (id) => {
+    peerConnection.on("open", (id) => {
       console.log("client id" + id);
-      sendVideoStream();
-      addConnection();
+      setPeer(peerConnection);
     });
   };
 
@@ -48,20 +48,33 @@ function Account() {
     console.log("refreshes!");
   });
 
+  useEffect(() => {
+    // when peer changes
+    console.log("peer changes");
+    if (peer) {
+      sendVideoStream();
+    }
+  }, [peer]);
+
   const sendVideoStream = () => {
+    console.log("stream eka ywnwa");
     const stream = new MediaStream([
       createEmptyAudioTrack(),
       createEmptyVideoTrack({ width: 640, height: 480 }),
     ]);
-    const call = peer.current.call(code, stream);
-    setCall(call);
-    call.on("stream", (remoteStream) => {
+    const userCall = peer.call(code, stream);
+    userCall.on("stream", (remoteStream) => {
       console.log("menna hambenwa badu");
-      attachToDOM("localVideo", remoteStream);
+      if (!ongoing) {
+        attachToDOM("localVideo", remoteStream);
+        setOngoing(true)
+      }
     });
+    setCall(userCall);
   };
 
   const attachToDOM = (id, stream) => {
+    console.log("dom ekata attach una");
     let videoElem = document.createElement("video");
     videoElem.id = id;
     videoElem.width = 640;
@@ -75,7 +88,7 @@ function Account() {
   };
 
   const addConnection = function () {
-    let conn = peer.current.connect(code);
+    let conn = peer.connect(code);
     setConnection(conn);
     conn.on("open", function () {
       // Receive messages
