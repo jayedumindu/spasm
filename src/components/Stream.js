@@ -19,7 +19,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 
 function Stream() {
   const { state } = useLocation();
-  const {user} = useAuth0()
+  const { user } = useAuth0();
 
   const [audio, setAudio] = useState(true);
   const [video, setVideo] = useState(true);
@@ -28,8 +28,57 @@ function Stream() {
   // const [chatEl, setChatEl] = useState(null);
   const [peer, setPeer] = useState(null);
   const [isLoading, setLoading] = useState(false);
+  const [connections, setConnections] = useState([]);
 
   const [userId, setUserId] = useState(null);
+
+  // messages
+  const [messages, setMessages] = useState([
+    {
+      text: "user2 has joined the conversation",
+      timestamp: 1578366389250,
+      type: "notification",
+    },
+    {
+      author: {
+        username: "user1",
+        id: 1,
+        avatarUrl: "https://image.flaticon.com/icons/svg/2446/2446032.svg",
+      },
+      text: "Hi",
+      type: "text",
+      timestamp: 1578366393250,
+    },
+    {
+      author: { username: "user2", id: 2, avatarUrl: null },
+      text: "Show two buttons",
+      type: "text",
+      timestamp: 1578366425250,
+      buttons: [
+        {
+          type: "URL",
+          title: "Yahoo",
+          payload: "http://www.yahoo.com",
+        },
+        {
+          type: "URL",
+          title: "Example",
+          payload: "http://www.example.com",
+        },
+      ],
+    },
+    {
+      author: {
+        username: "user1",
+        id: 1,
+        avatarUrl: "https://image.flaticon.com/icons/svg/2446/2446032.svg",
+      },
+      text: "What's up?",
+      type: "text",
+      timestamp: 1578366425250,
+      hasError: true,
+    },
+  ]);
 
   const canvasElement = document.createElement("canvas");
   const canvasCtx = canvasElement.getContext("2d", {
@@ -62,6 +111,23 @@ function Stream() {
     setOpen(false);
   };
 
+  // only when mounted
+  useEffect(() => {
+    // retreiving the element
+    shareWebCam();
+  }, []);
+
+  useEffect(() => {
+    let message = messages.at(-1);
+    console.log(message)
+    connections.forEach((connection) => {
+      console.log(connection)
+      if (connection.connectionId !== message.connection) {
+        connection.send(JSON.stringify(message));
+      }
+    });
+  }, [messages]);
+
   const startCall = () => {
     setLoading(true);
     const peer = new Peer(undefined, {
@@ -79,10 +145,41 @@ function Stream() {
     });
 
     peer.on("connection", (con) => {
-      con.on("data", (data) => console.log("new message : " + data));
+      con.on("data", (data) => {
+        // parse the JSON string
+        let receivedMessage = JSON.parse(data);
+        setMessages((prev) =>
+          prev.concat({
+            author: {
+              username: receivedMessage?.name,
+              id: 2,
+              avatarUrl: receivedMessage?.picture,
+            },
+            text: receivedMessage?.message,
+            timestamp: +new Date(),
+            type: "text",
+            connection : receivedMessage?.id
+          })
+        );
+      });
+      setMessages((prev) => {
+        return [
+          ...prev,
+          {
+            text: `${con.metadata.userName} has joined the conversation`,
+            type: "notification",
+          },
+        ];
+      });
+      setConnections((prev) => [...prev, con]);
+      con.on("open", () => {
+        console.log("opened");
+      });
     });
     peer.on("call", (call) => {
       console.log("call ekak awa");
+      // append to the chat about the user
+
       // if both are present
       if (cam.current && screen.current) {
         console.log("methana thamai");
@@ -131,12 +228,6 @@ function Stream() {
         cam.current = attachToDOM("cameraData", stream);
       });
   };
-
-  // only when mounted
-  useEffect(() => {
-    // retreiving the element
-    shareWebCam();
-  }, []);
 
   const captureScreen = async () => {
     try {
@@ -285,68 +376,29 @@ function Stream() {
     navigator.clipboard.writeText(userId);
   };
 
-  // messages
-  const [messages, setMessages] = useState([
-    {
-      text: "user2 has joined the conversation",
-      timestamp: 1578366389250,
-      type: "notification",
-    },
-    {
-      author: {
-        username: "user1",
-        id: 1,
-        avatarUrl: "https://image.flaticon.com/icons/svg/2446/2446032.svg",
-      },
-      text: "Hi",
-      type: "text",
-      timestamp: 1578366393250,
-    },
-    {
-      author: { username: "user2", id: 2, avatarUrl: null },
-      text: "Show two buttons",
-      type: "text",
-      timestamp: 1578366425250,
-      buttons: [
-        {
-          type: "URL",
-          title: "Yahoo",
-          payload: "http://www.yahoo.com",
-        },
-        {
-          type: "URL",
-          title: "Example",
-          payload: "http://www.example.com",
-        },
-      ],
-    },
-    {
-      author: {
-        username: "user1",
-        id: 1,
-        avatarUrl: "https://image.flaticon.com/icons/svg/2446/2446032.svg",
-      },
-      text: "What's up?",
-      type: "text",
-      timestamp: 1578366425250,
-      hasError: true,
-    },
-  ]);
-
   const handleOnSendMessage = (message) => {
-    console.log(message)
+    console.log(message);
     setMessages(
       messages.concat({
         author: {
           username: user?.name,
           id: 1,
-          avatarUrl: user?.picture
+          avatarUrl: user?.picture,
         },
         text: message,
         timestamp: +new Date(),
-        type: "text"
+        type: "text",
       })
     );
+    // send to all other connections
+    // let outgoing = JSON.stringify({
+    //   name: user?.name,
+    //   avatar: user?.picture,
+    //   message: message,
+    // });
+    // connections.forEach((conn) => {
+    //   conn.send(outgoing);
+    // });
   };
 
   return (
@@ -367,7 +419,9 @@ function Stream() {
         <div className="mediaWrapper">
           <div className="video-mask"></div>
         </div>
-        {callOngoing && <Chat messages={messages} handleOnSendMessage={handleOnSendMessage} />}
+        {callOngoing && (
+          <Chat messages={messages} handleOnSendMessage={handleOnSendMessage} />
+        )}
       </div>
       <div className="buttonBar">
         <IconButton onClick={audioToggle} className="stream-btn">

@@ -2,11 +2,12 @@ import { Button } from "@mui/base";
 import React, { useEffect, useRef, useState } from "react";
 import { Peer } from "peerjs";
 import { TextField } from "@mui/material";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuth0, User } from "@auth0/auth0-react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "./Navbar";
 
 import { createEmptyAudioTrack, createEmptyVideoTrack } from "../media/stream";
+import Chat from "./Chat";
 
 function Account() {
   const navigate = useNavigate();
@@ -15,13 +16,29 @@ function Account() {
 
   const [peer, setPeer] = useState(null);
 
-  const [message, setMessage] = useState(null);
   const [connection, setConnection] = useState(null);
   const [call, setCall] = useState(null);
-  const [ongoing, setOngoing] = useState(false);
 
-  const sendMessage = () => {
-    connection.send(message);
+  const sendMessage = (message) => {
+    let messageToHost = {
+      name: user?.name,
+      avatar: user?.picture,
+      message: message,
+      id: connection.connectionId,
+    };
+    connection.send(JSON.stringify(messageToHost));
+    setMessages(
+      messages.concat({
+        author: {
+          username: user?.name,
+          id: 1,
+          avatarUrl: user?.picture,
+        },
+        text: message,
+        timestamp: +new Date(),
+        type: "text",
+      })
+    );
   };
 
   const connectWithHost = () => {
@@ -37,7 +54,54 @@ function Account() {
     });
   };
 
-  const { isAuthenticated } = useAuth0();
+  const { isAuthenticated, user } = useAuth0();
+
+  const [messages, setMessages] = useState([
+    {
+      text: "user2 has joined the conversation",
+      timestamp: 1578366389250,
+      type: "notification",
+    },
+    {
+      author: {
+        username: "user1",
+        id: 1,
+        avatarUrl: "https://image.flaticon.com/icons/svg/2446/2446032.svg",
+      },
+      text: "Hi",
+      type: "text",
+      timestamp: 1578366393250,
+    },
+    {
+      author: { username: "user2", id: 2, avatarUrl: null },
+      text: "Show two buttons",
+      type: "text",
+      timestamp: 1578366425250,
+      buttons: [
+        {
+          type: "URL",
+          title: "Yahoo",
+          payload: "http://www.yahoo.com",
+        },
+        {
+          type: "URL",
+          title: "Example",
+          payload: "http://www.example.com",
+        },
+      ],
+    },
+    {
+      author: {
+        username: "user1",
+        id: 1,
+        avatarUrl: "https://image.flaticon.com/icons/svg/2446/2446032.svg",
+      },
+      text: "What's up?",
+      type: "text",
+      timestamp: 1578366425250,
+      hasError: true,
+    },
+  ]);
 
   useEffect(() => {
     // when cmoponent mounts
@@ -62,27 +126,45 @@ function Account() {
       createEmptyAudioTrack(),
       createEmptyVideoTrack({ width: 640, height: 480 }),
     ]);
+    const userConnection = peer.connect(code, {
+      metadata: { userName: user.name },
+    });
+    userConnection.on("open", function () {
+      // Receive messages
+      userConnection.on("data", function (data) {
+        let receivedMessage = JSON.parse(data);
+        receivedMessage.author && (receivedMessage.author.id = 2);
+        console.log(data);
+        setMessages((prev) => {
+          return [...prev, receivedMessage];
+        });
+      });
+    });
     const userCall = peer.call(code, stream);
     userCall.on("stream", (remoteStream) => {
       console.log("menna hambenwa badu");
-      if (!ongoing) {
-        attachToDOM("localVideo", remoteStream);
-        setOngoing(true)
-      }
+      removeFromDOM("localVideo");
+      attachToDOM("localVideo", remoteStream);
     });
     setCall(userCall);
+    setConnection(userConnection);
+  };
+
+  const removeFromDOM = (id, stream) => {
+    let elem = document.getElementById(id);
+    if (elem) elem.remove();
   };
 
   const attachToDOM = (id, stream) => {
     console.log("dom ekata attach una");
     let videoElem = document.createElement("video");
     videoElem.id = id;
-    videoElem.width = 640;
-    videoElem.height = 360;
+    videoElem.width = 940;
+    videoElem.height = 460;
     videoElem.autoplay = true;
     videoElem.muted = false;
     videoElem.setAttribute("playsinline", true);
-    const parent = document.body.querySelector(".mask");
+    const parent = document.body.querySelector(".video-mask");
     videoElem.srcObject = stream;
     parent.append(videoElem);
   };
@@ -101,19 +183,20 @@ function Account() {
   return (
     isAuthenticated && (
       <>
-        {/* <Navbar /> */}
-        <h1>User Account</h1>
-        {/* <button onClick={sendVideoStream}>listen to the stream</button> */}
-
-        {/* <button onClick={connectWithHost}>Connect to this ID</button> */}
-        <div className="mask"></div>
-        <hr />
-        <TextField
-          onChange={(event) => {
-            setMessage(event.target.value);
-          }}
-        />
-        <button onClick={sendMessage}>send</button>
+        <div className="stream-main">
+          <div className="stream-header">
+            <h3>Header</h3>
+          </div>
+          <div className="stream-body">
+            <div className="mediaWrapper">
+              <div className="video-mask"></div>
+            </div>
+            <Chat messages={messages} handleOnSendMessage={sendMessage} />
+          </div>
+          <div className="buttonBar">
+            <button>Hiiiii</button>
+          </div>
+        </div>
       </>
     )
   );

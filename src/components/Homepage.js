@@ -84,9 +84,7 @@ function Homepage() {
           <div className="home-inner-2">
             <Slider />
           </div>
-          {/* <h1>This is homepage</h1>
-        <button onClick={login}>Log In</button>
-        <button onClick={logout}>Log Out</button> */}
+          
         </div>
       </div>
     </>
