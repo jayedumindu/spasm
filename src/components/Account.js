@@ -127,7 +127,7 @@ function Account() {
       createEmptyVideoTrack({ width: 640, height: 480 }),
     ]);
     const userConnection = peer.connect(code, {
-      metadata: { userName: user.name },
+      metadata: { userName: user.name, email: user.email, avatar: user.picture },
     });
     userConnection.on("open", function () {
       // Receive messages

@@ -16,6 +16,7 @@ import BackDrop from "./BackDrop";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import Chat from "./Chat";
 import { useAuth0 } from "@auth0/auth0-react";
+import axios from 'axios'
 
 function Stream() {
   const { state } = useLocation();
@@ -29,6 +30,7 @@ function Stream() {
   const [peer, setPeer] = useState(null);
   const [isLoading, setLoading] = useState(false);
   const [connections, setConnections] = useState([]);
+  const [users, setUsers] = useState([]);
 
   const [userId, setUserId] = useState(null);
 
@@ -98,10 +100,13 @@ function Stream() {
   const endCall = () => {
     peer.disconnect();
     peer.destroy();
+    // save meeting data
+    saveMeeting()
     handleClickOpen();
   };
 
   const [open, setOpen] = useState(false);
+  const [startTime, setStartTime] = useState();
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -110,6 +115,22 @@ function Stream() {
   const handleClose = () => {
     setOpen(false);
   };
+
+  const BASE_URL = "https://simple-we-api.onrender.com";
+
+  const saveMeeting = async () => {
+    let data = {
+      id : peer.id,
+      host : user.email,
+      users : users,
+      startTime : startTime,
+      endTime : Date.now(),
+      messages : messages
+    }
+    let res = await axios.post(`${BASE_URL}/save/meeting`,data)
+    console.log(res)
+    console.log("meeting data succesfully saved! : " + res)
+  }
 
   // only when mounted
   useEffect(() => {
@@ -141,7 +162,9 @@ function Stream() {
       console.log("connection opened : " + id);
       setUserId(id);
       setCallOngoing(true);
-      setTimeout(() => setLoading(false), 2000);
+      setTimeout(() => {setLoading(false);
+        setStartTime(Date.now())
+      }, 2000);
     });
 
     peer.on("connection", (con) => {
@@ -171,6 +194,8 @@ function Stream() {
           },
         ];
       });
+      let {email, userName, avatar} = con.metadata
+      setUsers(prev => [...prev,{ email, userName, avatar }])
       setConnections((prev) => [...prev, con]);
       con.on("open", () => {
         console.log("opened");
@@ -390,15 +415,6 @@ function Stream() {
         type: "text",
       })
     );
-    // send to all other connections
-    // let outgoing = JSON.stringify({
-    //   name: user?.name,
-    //   avatar: user?.picture,
-    //   message: message,
-    // });
-    // connections.forEach((conn) => {
-    //   conn.send(outgoing);
-    // });
   };
 
   return (
