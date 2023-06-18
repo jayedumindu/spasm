@@ -54,7 +54,7 @@ function Account() {
     });
   };
 
-  const { isAuthenticated, user } = useAuth0();
+  const { isAuthenticated, user, } = useAuth0();
 
   const [messages, setMessages] = useState([
     {

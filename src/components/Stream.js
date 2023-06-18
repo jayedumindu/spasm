@@ -98,10 +98,10 @@ function Stream() {
   const overlay = useRef(null);
 
   const endCall = () => {
+    // save meeting data
+    saveMeeting();
     peer.disconnect();
     peer.destroy();
-    // save meeting data
-    saveMeeting()
     handleClickOpen();
   };
 
@@ -116,20 +116,21 @@ function Stream() {
     setOpen(false);
   };
 
-  const BASE_URL = "https://simple-we-api.onrender.com";
+  const BASE_URL = "http://127.0.0.1:6500";
 
   const saveMeeting = async () => {
     let data = {
-      id : peer.id,
+      peerId : peer.id,
       host : user.email,
       users : users,
       startTime : startTime,
       endTime : Date.now(),
       messages : messages
     }
+    console.log(data)
+    console.log("save karanna yanne")
     let res = await axios.post(`${BASE_URL}/save/meeting`,data)
-    console.log(res)
-    console.log("meeting data succesfully saved! : " + res)
+    console.log("meeting data succesfully saved! : " + res.data)
   }
 
   // only when mounted
