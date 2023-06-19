@@ -18,6 +18,8 @@ function Account() {
 
   const [connection, setConnection] = useState(null);
   const [call, setCall] = useState(null);
+  const [ongoing, setOngoing] = useState(false);
+  const [isStopped, setIsStopped] = useState(false);
 
   const sendMessage = (message) => {
     let messageToHost = {
@@ -54,7 +56,7 @@ function Account() {
     });
   };
 
-  const { isAuthenticated, user, } = useAuth0();
+  const { isAuthenticated, user } = useAuth0();
 
   const [messages, setMessages] = useState([
     {
@@ -127,7 +129,11 @@ function Account() {
       createEmptyVideoTrack({ width: 640, height: 480 }),
     ]);
     const userConnection = peer.connect(code, {
-      metadata: { userName: user.name, email: user.email, avatar: user.picture },
+      metadata: {
+        userName: user.name,
+        email: user.email,
+        avatar: user.picture,
+      },
     });
     userConnection.on("open", function () {
       // Receive messages
@@ -140,12 +146,16 @@ function Account() {
         });
       });
     });
+    userConnection.on("close", () => {
+      setIsStopped(true)
+    })
     const userCall = peer.call(code, stream);
     userCall.on("stream", (remoteStream) => {
       console.log("menna hambenwa badu");
       removeFromDOM("localVideo");
       attachToDOM("localVideo", remoteStream);
     });
+    
     setCall(userCall);
     setConnection(userConnection);
   };
@@ -169,34 +179,42 @@ function Account() {
     parent.append(videoElem);
   };
 
-  const addConnection = function () {
-    let conn = peer.connect(code);
-    setConnection(conn);
-    conn.on("open", function () {
-      // Receive messages
-      conn.on("data", function (data) {
-        console.log("Received", data);
-      });
-    });
+  const leftMeeting = () => {
+    connection.close();
+    // terminate from the server
+    peer.disconnect();
+    peer.destroy();
+    navigate("/");
   };
 
   return (
     isAuthenticated && (
       <>
-        <div className="stream-main">
-          <div className="stream-header">
-            <h3>Header</h3>
-          </div>
-          <div className="stream-body">
-            <div className="mediaWrapper">
-              <div className="video-mask"></div>
-            </div>
-            <Chat messages={messages} handleOnSendMessage={sendMessage} />
-          </div>
-          <div className="buttonBar">
-            <button>Hiiiii</button>
-          </div>
-        </div>
+        {isStopped && (
+          <>
+            {" "}
+            <h1>Call has been stopped by the host....</h1>{" "}
+          </>
+        )}
+        {!isStopped && (
+          <>
+            {" "}
+            <div className="stream-main">
+              <div className="stream-header">
+                <h3>Header</h3>
+              </div>
+              <div className="stream-body">
+                <div className="mediaWrapper">
+                  <div className="video-mask"></div>
+                </div>
+                <Chat messages={messages} handleOnSendMessage={sendMessage} />
+              </div>
+              <div className="buttonBar">
+                <button onClick={leftMeeting}>end meeting</button>
+              </div>
+            </div>{" "}
+          </>
+        )}
       </>
     )
   );

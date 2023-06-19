@@ -16,7 +16,7 @@ import BackDrop from "./BackDrop";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import Chat from "./Chat";
 import { useAuth0 } from "@auth0/auth0-react";
-import axios from 'axios'
+import axios from "axios";
 
 function Stream() {
   const { state } = useLocation();
@@ -120,18 +120,18 @@ function Stream() {
 
   const saveMeeting = async () => {
     let data = {
-      peerId : peer.id,
-      host : user.email,
-      users : users,
-      startTime : startTime,
-      endTime : Date.now(),
-      messages : messages
-    }
-    console.log(data)
-    console.log("save karanna yanne")
-    let res = await axios.post(`${BASE_URL}/save/meeting`,data)
-    console.log("meeting data succesfully saved! : " + res.data)
-  }
+      peerId: peer.id,
+      host: user.email,
+      users: users,
+      startTime: startTime,
+      endTime: Date.now(),
+      messages: messages,
+    };
+    console.log(data);
+    console.log("save karanna yanne");
+    let res = await axios.post(`${BASE_URL}/save/meeting`, data);
+    console.log("meeting data succesfully saved! : " + res.data);
+  };
 
   // only when mounted
   useEffect(() => {
@@ -140,10 +140,14 @@ function Stream() {
   }, []);
 
   useEffect(() => {
+    console.log(users);
+  }, [users]);
+
+  useEffect(() => {
     let message = messages.at(-1);
-    console.log(message)
+    console.log(message);
     connections.forEach((connection) => {
-      console.log(connection)
+      console.log(connection);
       if (connection.connectionId !== message.connection) {
         connection.send(JSON.stringify(message));
       }
@@ -163,8 +167,9 @@ function Stream() {
       console.log("connection opened : " + id);
       setUserId(id);
       setCallOngoing(true);
-      setTimeout(() => {setLoading(false);
-        setStartTime(Date.now())
+      setTimeout(() => {
+        setLoading(false);
+        setStartTime(Date.now());
       }, 2000);
     });
 
@@ -182,7 +187,7 @@ function Stream() {
             text: receivedMessage?.message,
             timestamp: +new Date(),
             type: "text",
-            connection : receivedMessage?.id
+            connection: receivedMessage?.id,
           })
         );
       });
@@ -195,11 +200,25 @@ function Stream() {
           },
         ];
       });
-      let {email, userName, avatar} = con.metadata
-      setUsers(prev => [...prev,{ email, userName, avatar }])
+      let { email, userName, avatar } = con.metadata;
+      setUsers((prev) => [...prev, { email, userName, avatar }]);
       setConnections((prev) => [...prev, con]);
       con.on("open", () => {
         console.log("opened");
+      });
+      con.on("close", () => {
+        console.log("connection closed");
+        setMessages((prev) => {
+          return [
+            ...prev,
+            {
+              text: `${con.metadata.userName} has left the conversation`,
+              type: "notification",
+            },
+          ];
+        });
+        // remove the user from userList
+        setUsers((prev) => prev.filter((user) => user.email != email));
       });
     });
     peer.on("call", (call) => {
@@ -217,7 +236,9 @@ function Stream() {
       }
       peer.on("close", (con) => {
         //  close the call
-        call.close();
+        connections.forEach(con => {
+          con.close()
+        })
         console.log("peer stopped! /n call stopped");
       });
     });

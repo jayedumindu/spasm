@@ -21,6 +21,8 @@ function App() {
 
       <Route path="/stream" element={<RouteGuard component={Stream} />} />
 
+      <Route path="/stream/end" element={<RouteGuard component={Stream} />} />
+
       <Route path="/join/:code" element={<RouteGuard component={Account} />} />
     </Routes>
   );
