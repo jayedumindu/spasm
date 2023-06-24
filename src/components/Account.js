@@ -1,10 +1,11 @@
 import { Button } from "@mui/base";
 import React, { useEffect, useRef, useState } from "react";
 import { Peer } from "peerjs";
-import { TextField } from "@mui/material";
+import { IconButton, TextField } from "@mui/material";
 import { useAuth0, User } from "@auth0/auth0-react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "./Navbar";
+import CallEndIcon from "@mui/icons-material/CallEnd";
 
 import { createEmptyAudioTrack, createEmptyVideoTrack } from "../media/stream";
 import Chat from "./Chat";
@@ -147,15 +148,15 @@ function Account() {
       });
     });
     userConnection.on("close", () => {
-      setIsStopped(true)
-    })
+      setIsStopped(true);
+    });
     const userCall = peer.call(code, stream);
     userCall.on("stream", (remoteStream) => {
       console.log("menna hambenwa badu");
       removeFromDOM("localVideo");
       attachToDOM("localVideo", remoteStream);
     });
-    
+
     setCall(userCall);
     setConnection(userConnection);
   };
@@ -169,8 +170,8 @@ function Account() {
     console.log("dom ekata attach una");
     let videoElem = document.createElement("video");
     videoElem.id = id;
-    videoElem.width = 940;
-    videoElem.height = 460;
+    videoElem.width = 800;
+    // videoElem.height = 460;
     videoElem.autoplay = true;
     videoElem.muted = false;
     videoElem.setAttribute("playsinline", true);
@@ -184,7 +185,7 @@ function Account() {
     // terminate from the server
     peer.disconnect();
     peer.destroy();
-    navigate("/");
+    navigate("/stream/end");
   };
 
   return (
@@ -200,19 +201,26 @@ function Account() {
           <>
             {" "}
             <div className="stream-main">
-              <div className="stream-header">
-                <h3>Header</h3>
-              </div>
-              <div className="stream-body">
-                <div className="mediaWrapper">
-                  <div className="video-mask"></div>
+              <div className="stream-main-1">
+                <div className="stream-header">
+                  <h3>Header</h3>
                 </div>
+                <div className="stream-body">
+                  <div className="mediaWrapper">
+                    <div className="video-mask"></div>
+                  </div>
+                </div>
+                <div className="buttonBar">
+                  {/* <button onClick={leftMeeting}>end meeting</button> */}
+                  <IconButton className="stream-btn stream-btn-call stream-btn-call-started stream-btn-call-xl" onClick={leftMeeting}>
+                    <CallEndIcon />
+                  </IconButton>
+                </div>
+              </div>
+              <div className="stream-main-2">
                 <Chat messages={messages} handleOnSendMessage={sendMessage} />
               </div>
-              <div className="buttonBar">
-                <button onClick={leftMeeting}>end meeting</button>
-              </div>
-            </div>{" "}
+            </div>
           </>
         )}
       </>

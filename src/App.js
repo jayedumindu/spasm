@@ -2,6 +2,7 @@ import React from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Route, Router, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Disconnected from "./components/Disconected";
 import Homepage from "./components/Homepage";
 import Dashboard from "./components/Dashboard";
 import Account from "./components/Account";
@@ -21,7 +22,7 @@ function App() {
 
       <Route path="/stream" element={<RouteGuard component={Stream} />} />
 
-      <Route path="/stream/end" element={<RouteGuard component={Stream} />} />
+      <Route path="/stream/end" element={<RouteGuard component={Homepage} />} />
 
       <Route path="/join/:code" element={<RouteGuard component={Account} />} />
     </Routes>

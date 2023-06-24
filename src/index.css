@@ -94,13 +94,22 @@
   }
   /* stream */
   .stream-main {
-    @apply w-full bg-black text-white;
+    @apply w-full bg-black text-white flex flex-row;
+  }
+  .stream-main-1 {
+    @apply basis-full
+  }
+  .stream-main-1-started {
+    @apply basis-3/4
+  }
+  .stream-main-2 {
+    @apply basis-1/4;
   }
   .stream-header {
     @apply h-1/6 flex text-xl items-baseline p-5 place-content-center gap-3;
   }
   .stream-body {
-    @apply h-4/6 flex;
+    @apply h-4/6 flex flex-row;
   }
   .buttonBar {
     @apply h-1/6 gap-3 flex justify-center items-center;
@@ -117,20 +126,26 @@
   .stream-btn-call-ended {
     @apply bg-green-600 !important;
   }
+  .stream-btn-call-xl {
+    @apply text-5xl !important;
+  }
   .copy-btn {
     @apply text-white !important;
   }
   .mediaWrapper {
-    @apply w-full h-full flex justify-evenly items-center;
+    @apply w-full h-full flex items-center justify-center;
   }
   .chatBox {
-    @apply basis-1/4 h-full flex items-center pr-10 ;
+    @apply h-full flex items-center;
   }
   .video-mask {
-    @apply rounded-md drop-shadow-2xl h-fit;
+    @apply rounded-md overflow-hidden drop-shadow-2xl h-auto;
   }
   /* chatbox */
-  .chat-container{
+  .chat-container {
     @apply rounded-md w-3/4 !important;
+  }
+  #localVideo{
+    @apply h-1/2
   }
 }

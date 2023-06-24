@@ -236,9 +236,9 @@ function Stream() {
       }
       peer.on("close", (con) => {
         //  close the call
-        connections.forEach(con => {
-          con.close()
-        })
+        connections.forEach((con) => {
+          con.close();
+        });
         console.log("peer stopped! /n call stopped");
       });
     });
@@ -441,59 +441,64 @@ function Stream() {
 
   return (
     <div className="stream-main">
-      <div className="stream-header">
-        {callOngoing && (
-          <>
-            <h1>{userId}</h1>
-            <IconButton onClick={copyToClipboard} className="copy-btn">
-              <ContentCopyIcon />
-            </IconButton>
-          </>
-        )}
-      </div>
-      <div className="stream-body">
-        <AlertDialog open={open} handleClose={handleClose} />
-        <BackDrop open={isLoading} title={"establishing a connection  "} />
-        <div className="mediaWrapper">
-          <div className="video-mask"></div>
-        </div>
-        {callOngoing && (
-          <Chat messages={messages} handleOnSendMessage={handleOnSendMessage} />
-        )}
-      </div>
-      <div className="buttonBar">
-        <IconButton onClick={audioToggle} className="stream-btn">
-          {audio && <MicIcon />}
-          {!audio && <MicOffIcon />}
-        </IconButton>
-        <IconButton onClick={videoToggle} className="stream-btn">
-          {video && <VideocamIcon />}
-          {!video && <VideocamOffIcon />}
-        </IconButton>
-        <IconButton onClick={screenToggle} className="stream-btn">
-          {screenShare && <ScreenShareIcon />}
-          {!screenShare && <StopScreenShareIcon />}
-        </IconButton>
-        <IconButton
-          onClick={callOngoing ? endCall : startCall}
-          className={`stream-btn stream-btn-call ${
-            callOngoing ? "stream-btn-call-started" : "stream-btn-call-ended"
-          }`}
-        >
-          {!callOngoing && (
-            <>
-              <p>start</p> &nbsp;
-              <CallIcon />
-            </>
-          )}
+      <div className={ `${ callOngoing ? 'stream-main-1-started' : 'stream-main-1' }`}>
+        <div className="stream-header">
           {callOngoing && (
             <>
-              <p>end</p> &nbsp;
-              <CallEndIcon />
+              <h1>{userId}</h1>
+              <IconButton onClick={copyToClipboard} className="copy-btn">
+                <ContentCopyIcon />
+              </IconButton>
             </>
           )}
-        </IconButton>
+        </div>
+        <div className="stream-body">
+          <AlertDialog open={open} handleClose={handleClose} />
+          <BackDrop open={isLoading} title={"establishing a connection  "} />
+          <div className="mediaWrapper">
+            <div className="video-mask"></div>
+          </div>
+        </div>
+        <div className="buttonBar">
+          <IconButton onClick={audioToggle} className="stream-btn">
+            {audio && <MicIcon />}
+            {!audio && <MicOffIcon />}
+          </IconButton>
+          <IconButton onClick={videoToggle} className="stream-btn">
+            {video && <VideocamIcon />}
+            {!video && <VideocamOffIcon />}
+          </IconButton>
+          <IconButton onClick={screenToggle} className="stream-btn">
+            {screenShare && <ScreenShareIcon />}
+            {!screenShare && <StopScreenShareIcon />}
+          </IconButton>
+          <IconButton
+            onClick={callOngoing ? endCall : startCall}
+            className={`stream-btn stream-btn-call ${
+              callOngoing ? "stream-btn-call-started" : "stream-btn-call-ended"
+            }`}
+          >
+            {!callOngoing && (
+              <>
+                <p>start</p> &nbsp;
+                <CallIcon />
+              </>
+            )}
+            {callOngoing && (
+              <>
+                <p>end</p> &nbsp;
+                <CallEndIcon />
+              </>
+            )}
+          </IconButton>
+        </div>
       </div>
+
+      {callOngoing && (
+        <div className="stream-main-2">
+          <Chat messages={messages} handleOnSendMessage={handleOnSendMessage} />
+        </div>
+      )}
     </div>
   );
 }

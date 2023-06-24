@@ -11,15 +11,13 @@ function Auth0ProviderWithNavigation({ children }) {
   const redirectUri = window.location.origin;
   const BASE_URL = "http://127.0.0.1:6500";
 
-  // const { isAuthenticated, user } = useAuth0();
-
-  const onRedirectCallback = async (appState, user) => {
+  const onRedirectCallback = (appState, user) => {
     let data = {
       _id: user.email,
       avatar: user.picture,
       name: user.name,
     };
-    await axios.post(`${BASE_URL}/save/user`, data);
+    axios.post(`${BASE_URL}/save/user`, data);
     navigate(appState?.returnTo || window.location.pathname);
   };
 
