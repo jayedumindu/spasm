@@ -170,8 +170,8 @@ function Account() {
     console.log("dom ekata attach una");
     let videoElem = document.createElement("video");
     videoElem.id = id;
-    videoElem.width = 800;
-    // videoElem.height = 460;
+    videoElem.width = 900;
+    videoElem.height = 500;
     videoElem.autoplay = true;
     videoElem.muted = false;
     videoElem.setAttribute("playsinline", true);

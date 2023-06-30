@@ -139,7 +139,7 @@
     @apply h-full flex items-center;
   }
   .video-mask {
-    @apply rounded-md overflow-hidden drop-shadow-2xl h-auto;
+    @apply rounded-md overflow-hidden drop-shadow-2xl flex h-auto;
   }
   /* chatbox */
   .chat-container {

@@ -26,10 +26,10 @@ function Stream() {
   const [video, setVideo] = useState(true);
   const [screenShare, setScreen] = useState(false);
   const [callOngoing, setCallOngoing] = useState(false);
-  // const [chatEl, setChatEl] = useState(null);
   const [peer, setPeer] = useState(null);
   const [isLoading, setLoading] = useState(false);
   const [connections, setConnections] = useState([]);
+  const [calls, setCalls] = useState([]);
   const [users, setUsers] = useState([]);
 
   const [userId, setUserId] = useState(null);
@@ -223,8 +223,6 @@ function Stream() {
     });
     peer.on("call", (call) => {
       console.log("call ekak awa");
-      // append to the chat about the user
-
       // if both are present
       if (cam.current && screen.current) {
         console.log("methana thamai");
@@ -234,6 +232,8 @@ function Stream() {
         call.answer(cam.current.captureStream());
         console.log("dunna");
       }
+      // add to "calls"
+      setCalls((calls) => [...calls, call]);
       peer.on("close", (con) => {
         //  close the call
         connections.forEach((con) => {
@@ -246,7 +246,6 @@ function Stream() {
 
   function attachMediaStream(id, audio, video) {
     let elem = document.getElementById(id);
-    // let stream = getLocalCamStream();
     navigator.mediaDevices
       .getUserMedia({
         video: video,
@@ -272,7 +271,7 @@ function Stream() {
         audio: audio,
       })
       .then((stream) => {
-        cam.current = attachToDOM("cameraData", stream);
+        cam.current = attachToDOM("cameraData", stream, true);
       });
   };
 
@@ -284,9 +283,10 @@ function Stream() {
         },
         audio: false,
       });
-      screen.current = attachToDOM("screenData", localScreenStream);
+      screen.current = attachToDOM("screenData", localScreenStream, true);
       // merge both screen and camera to a canvas
       await mergeStreams();
+      replaceStream(overlay.current.captureStream());
     } catch (ex) {
       console.log("Error occurred", ex);
     }
@@ -300,7 +300,7 @@ function Stream() {
   };
 
   // composing video from html element
-  function attachToDOM(id, stream) {
+  function attachToDOM(id, stream, append) {
     let videoElem = document.createElement("video");
     videoElem.id = id;
     videoElem.width = 640;
@@ -308,11 +308,11 @@ function Stream() {
     videoElem.autoplay = true;
     videoElem.muted = true;
     videoElem.setAttribute("playsinline", true);
+    // videoElem.style.display = display ? display : "block"
     const parent = document.body.querySelector(".video-mask");
     videoElem.srcObject = new MediaStream(stream.getTracks());
-    parent.append(videoElem);
-    // let mediaStream = document.querySelector("video").srcObject;
-    // stream.getVideoTracks().forEach((track) => track.play());
+    append && parent.append(videoElem);
+    // parent.append(videoElem);
     return videoElem;
   }
 
@@ -342,7 +342,6 @@ function Stream() {
         Math.floor(screen.current.videoWidth / 4),
         Math.floor(screen.current.videoHeight / 4)
       ); // this is just a rough calculation to offset the webcam stream to bottom left
-      // screen.current.
       let imageData = canvasCtx.getImageData(0, 0, 640, 360); // this makes it work
       canvasCtx.putImageData(imageData, 0, 0); // properly on safari/webkit browsers too
       canvasCtx.restore();
@@ -351,48 +350,41 @@ function Stream() {
   }
 
   async function mergeStreams() {
-    // document.getElementById("mutingStreams").style.display = "block";
     await makeComposite();
     audioContext = new AudioContext();
     audioDestination = audioContext.createMediaStreamDestination();
     let fullVideoStream = canvasElement.captureStream();
-    // let existingAudioStreams = [
-    //   ...(localCamStream ? localCamStream.getAudioTracks() : []),
-    //   ...(localScreenStream ? localScreenStream.getAudioTracks() : []),
-    // ];
-    // audioTracks.push(
-    //   audioContext.createMediaStreamSource(
-    //     new MediaStream([existingAudioStreams[0]])
-    //   )
-    // );
-    // if (existingAudioStreams.length > 1) {
-    //   audioTracks.push(
-    //     audioContext.createMediaStreamSource(
-    //       new MediaStream([existingAudioStreams[1]])
-    //     )
-    //   );
-    // }
-    // audioTracks.map((track) => track.connect(audioDestination));
-    // console.log(audioDestination.stream);
     localOverlayStream = new MediaStream([...fullVideoStream.getVideoTracks()]);
-    // let fullOverlayStream = new MediaStream([
-    //   ...fullVideoStream.getVideoTracks(),
-    //   ...audioDestination.stream.getTracks(),
-    // ]);
-    // console.log(localOverlayStream, existingAudioStreams);
     if (localOverlayStream) {
-      overlay.current = attachToDOM("pipOverlayStream", localOverlayStream);
-      // mediaRecorder = new MediaRecorder(fullOverlayStream, encoderOptions);
-      // mediaRecorder.ondataavailable = handleDataAvailable;
-      // overlay.volume = 0;
-      // cam.volume = 0;
-      // screen.volume = 0;
-      // cam.style.display = "none";
-      // localCamStream.getAudioTracks().map(track => { track.enabled = false });
-      // screen.style.display = "none";
-      // localScreenStream.getAudioTracks().map(track => { track.enabled = false });
+      overlay.current = attachToDOM(
+        "pipOverlayStream",
+        localOverlayStream,
+        false
+      );
+      console.log("overlay attached!!!");
     }
   }
+
+  const replaceStream = async (mediaStream) => {
+    console.log(calls);
+    calls.forEach((call) => {
+      const peerConnection = call.peerConnection;
+      if (peerConnection) {
+        for (const sender of peerConnection.getSenders()) {
+          if (sender.track.kind == "audio") {
+            if (mediaStream.getAudioTracks().length > 0) {
+              sender.replaceTrack(mediaStream.getAudioTracks()[0]);
+            }
+          }
+          if (sender.track.kind == "video") {
+            if (mediaStream.getVideoTracks().length > 0) {
+              sender.replaceTrack(mediaStream.getVideoTracks()[0]);
+            }
+          }
+        }
+      }
+    });
+  };
 
   const audioToggle = () => {
     if (!audio) {
@@ -402,6 +394,8 @@ function Stream() {
       let mediaStream = document.getElementById("cameraData").srcObject;
       mediaStream.getAudioTracks().forEach((track) => track.stop());
     }
+    replaceStream(cam.current.captureStream());
+    console.log("audio replace kra");
     setAudio(!audio);
   };
 
@@ -413,9 +407,23 @@ function Stream() {
       let mediaStream = document.getElementById("cameraData").srcObject;
       mediaStream.getVideoTracks().forEach((track) => track.stop());
     }
+    replaceStream(cam.current.captureStream());
+    console.log("video replace kra");
+
     setVideo(!video);
   };
+
   const screenToggle = () => {
+    if (!screenShare) {
+      captureScreen();
+    } else {
+      screen.current = null;
+      overlay.current = null;
+      replaceStream(cam.current.captureStream());
+      // remove from DOM
+      document.querySelector(".video-mask :nth-child(2)").remove()
+
+    }
     setScreen(!screenShare);
   };
 
@@ -441,7 +449,9 @@ function Stream() {
 
   return (
     <div className="stream-main">
-      <div className={ `${ callOngoing ? 'stream-main-1-started' : 'stream-main-1' }`}>
+      <div
+        className={`${callOngoing ? "stream-main-1-started" : "stream-main-1"}`}
+      >
         <div className="stream-header">
           {callOngoing && (
             <>
